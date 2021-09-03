@@ -1,81 +1,94 @@
-import React, { useState, useEffect, useRef } from 'react'
+import React, { useEffect, useRef, useState } from 'react'
 import Blog from './components/Blog'
-import blogService from './services/blogs'
+import Container from '@material-ui/core/Container'
+import { AppBar, Button, Toolbar, Paper } from '@material-ui/core'
+
+import { BrowserRouter as Router, Switch, Route, Link } from "react-router-dom"
+
 import Login from './components/Login'
-import CreateBlog from './components/CreateBlog'
+import CreateBlogForm from './components/CreateBlog'
+import Header from './components/Header'
 import Notifi from './components/Notification'
+import Employer from './components/Employer'
 import Togglable from './components/Togglable'
+import UserView from './components/UserView'
+import { User } from './components/User'
+import BlogList from './components/BlogList'
+import JobList from './components/jobList'
+import AllJobDisplay from './components/AllJobDisplay'
+import { Register } from './components/Register'
+
+import { useSelector, useDispatch } from 'react-redux'
+import { initBlogList } from './reducers/blogReducer'
+import { anyUser, logoutUser } from './reducers/userReducer'
+import { userList } from './reducers/userViewReducer'
+import { initJobList } from './reducers/jobReducer'
+import { initEmployer } from './reducers/employerReducer'
 
 const App = () => {
-  const [blogs, setBlogs] = useState([])
-  const [user, setUser] = useState(null)
-  const [newBlog, setNewBlog] = useState(true)
-  const [notice, setNotice] = useState(null)
+  const user = useSelector(s => s.user)
+  const userListState = useSelector(s => s.userView)
   const blogCreateRef = useRef()
-  useEffect(() => {
-    blogService.getAll().then(blog =>
-      setBlogs(blog))
-  }, [newBlog])
+  const blog = useSelector(s => s.blogs.sort((a, b) => b.likes - a.likes))
+  const job = useSelector(s => s.jobs)
+
+  const dispatch = useDispatch()
 
   useEffect(() => {
-    const loggedUserJSON = window.localStorage.getItem('loggedBlogUser')
-    if (loggedUserJSON) {
-      const user = JSON.parse(loggedUserJSON)
-      setUser(user)
-      blogService.setToken(user.token)
-    }
+    dispatch(initJobList())
+  }, [user])
+
+  useEffect(() => {
+    dispatch(initEmployer())
   }, [])
 
-  const handleLogout = async () => {
-    window.localStorage.clear()
-    setUser(null)
-  }
-  const createBlog = async (blogContent) => {
-    blogCreateRef.current.toggleVisible()
-    await blogService.create(blogContent)
-    setNotice(`a new blog ${blogContent.title} by ${blogContent.author} added`)
-    setTimeout(() => setNotice(null), 5000)
-    setNewBlog(!newBlog)
-  }
-  const handleLike = async ({ newLike, id }) => {
-    await blogService.put({ newLike, id })
-    setNewBlog(!newBlog)
-  }
-  const handleRemove = async ({ id }) => {
-    await blogService.remove({ id })
-    setNewBlog(!newBlog)
-  }
+  useEffect(() => {
+    dispatch(anyUser())
+  }, [])
 
-  if (user === null) {
-    return (
-      <div>
-        <h2>log in to application</h2>
-        <Notifi message={notice} />
-        <Login setUser={setUser} setNotice={setNotice} />
-      </div>
-    )
-  }
+  useEffect(() => {
+    dispatch(userList())
+  }, [blog])
+
+
+
   return (
-    <div>
-      <h2> blogs </h2>
-      <Notifi message={notice} />
-      <p>
-        {`${user.username} logged in`}
-        <button onClick={handleLogout}>
-          logout
-        </button>
-      </p>
-      <div>
-        <Togglable buttonLabel="Create blog" ref={blogCreateRef}>
-          <CreateBlog createBlog={createBlog} />
-        </Togglable>
-      </div>
-      <div>
-        {blogs.sort((a, b) => b.likes - a.likes).map(blog =>
-          <Blog key={blog.id} blog={blog} handleLike={handleLike} handleRemove={handleRemove}/>
-        )}
-      </div>
-    </div>
+    
+    <Container maxWidth="lg" >
+      <Paper elevation={3} style={{height: 1080}}>
+      <Router>
+        <div>
+          <Header />
+        </div>
+        <div><Notifi /></div>
+        <Switch>
+          <Route path="/blogs/:id">
+            <Blog blog={blog} />
+          </Route>
+          <Route path="/users/:id">
+            <User userState={userListState} />
+          </Route>
+          <Route path="/login">
+            <div style={{ marginTop: 20 }}>
+              <Login /></div>
+          </Route>
+          <Route path="/users">
+            <UserView />
+          </Route>
+          <Route path="/register">
+            <Register/>
+          </Route>
+          <Route path="/employer">
+            <Employer />
+          </Route>
+          <Route path="/">
+            <AllJobDisplay/>
+          </Route>
+        </Switch>
+      </Router>
+      </Paper>
+    </Container>
+    
   )
 }
 

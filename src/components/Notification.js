@@ -1,6 +1,10 @@
 import React from 'react'
-const Notifi = ({ message }) => {
-  const addStyle = {
+import { useSelector } from 'react-redux'
+import { Alert } from '@material-ui/lab'
+
+const Notifi = () => {
+  const notiMessage = useSelector(state => state.notice)
+  /*const addStyle = {
     color: 'green',
     fontSize: 20,
     background: 'lightgrey',
@@ -8,18 +12,20 @@ const Notifi = ({ message }) => {
     borderRadius: 5,
     padding: 10,
     marginBottom: 10
-  }
-  const errorStyle = {
+  }*/
+  /*const errorStyle = {
     ...addStyle, color: 'red'
-  }
-  if (message === null) { return null }
-  else if (message.includes('wrong')) {
-    return (
-      <div style={errorStyle}>{message}</div>
-    )
-  }
+  }*/
+  if (notiMessage === null) { 
+    return null 
+  } else if (notiMessage.includes('Wrong') || notiMessage.includes('valid') || notiMessage.includes('who')){
   return (
-    <div style={addStyle}>{message}</div>
+    
+    <Alert severity="error">{notiMessage}</Alert>
+    //{<div style={notiMessage.includes('Wrong')? errorStyle: addStyle}>{notiMessage}</div>}
+  )}
+  return (
+    <Alert severity="success">{notiMessage}</Alert>
   )
 }
 export default Notifi
